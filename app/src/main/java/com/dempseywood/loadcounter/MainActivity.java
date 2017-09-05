@@ -1,5 +1,6 @@
 package com.dempseywood.loadcounter;
 
+import android.content.Intent;
 import android.os.CountDownTimer;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -72,6 +73,19 @@ public class MainActivity extends AppCompatActivity {
                 unLoadButton.setVisibility((View.GONE));
                 unloadMaterialButton.setVisibility((View.GONE));
 
+            }
+        });
+
+        Button loadMaterialButton = (Button )findViewById(R.id.loadMaterialButton);
+        Button unloadMaterialButton = (Button )findViewById(R.id.unloadMaterialButton);
+        loadMaterialButton.setText(Data.getMaterial());
+        unloadMaterialButton.setText(Data.getMaterial());
+        loadMaterialButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity activity = (MainActivity) v.getContext();
+                Intent intent = new Intent(activity, ChooseMaterialActivity.class);
+                activity.startActivity(intent);
             }
         });
     }
