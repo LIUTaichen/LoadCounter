@@ -1,4 +1,4 @@
-package com.dempseywood.loadcounter;
+package com.dempseywood.loadcounter.db;
 
 import android.arch.persistence.room.Room;
 import android.content.Context;

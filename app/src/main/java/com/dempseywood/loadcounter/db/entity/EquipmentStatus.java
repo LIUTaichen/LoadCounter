@@ -1,6 +1,5 @@
-package com.dempseywood.loadcounter.entity;
+package com.dempseywood.loadcounter.db.entity;
 
-import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
 
@@ -27,6 +26,7 @@ public class EquipmentStatus {
     private Double latitude;
 
     private Double longitude;
+    private String imei;
 
 
     public Integer getId() {
@@ -92,5 +92,13 @@ public class EquipmentStatus {
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public String getImei() {
+        return imei;
+    }
+
+    public void setImei(String imei) {
+        this.imei = imei;
     }
 }

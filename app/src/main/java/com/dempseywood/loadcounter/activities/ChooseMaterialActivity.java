@@ -1,4 +1,4 @@
-package com.dempseywood.loadcounter;
+package com.dempseywood.loadcounter.activities;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
@@ -8,6 +8,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+
+import com.dempseywood.loadcounter.Data;
+import com.dempseywood.loadcounter.R;
 
 public class ChooseMaterialActivity extends AppCompatActivity {
 
@@ -47,4 +50,5 @@ public class ChooseMaterialActivity extends AppCompatActivity {
 
 
     }
+
 }

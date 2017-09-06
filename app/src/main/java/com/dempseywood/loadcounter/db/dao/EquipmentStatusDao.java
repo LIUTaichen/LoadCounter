@@ -1,11 +1,11 @@
-package com.dempseywood.loadcounter.dao;
+package com.dempseywood.loadcounter.db.dao;
 
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.Query;
 
-import com.dempseywood.loadcounter.entity.EquipmentStatus;
+import com.dempseywood.loadcounter.db.entity.EquipmentStatus;
 
 import java.util.List;
 
@@ -30,4 +30,7 @@ public interface EquipmentStatusDao {
 
     @Delete
     void delete(EquipmentStatus equipmentStatus);
+
+    @Query("DELETE  FROM equipmentstatus")
+    void deleteAll();
 }

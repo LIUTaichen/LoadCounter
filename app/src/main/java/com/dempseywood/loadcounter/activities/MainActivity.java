@@ -1,0 +1,191 @@
+package com.dempseywood.loadcounter.activities;
+
+import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.PermissionChecker;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.telephony.TelephonyManager;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+import com.dempseywood.loadcounter.DwLocationListener;
+import com.dempseywood.loadcounter.HttpRequestTask;
+import com.dempseywood.loadcounter.db.DB;
+import com.dempseywood.loadcounter.Data;
+import com.dempseywood.loadcounter.R;
+import com.dempseywood.loadcounter.db.dao.EquipmentStatusDao;
+import com.dempseywood.loadcounter.db.entity.EquipmentStatus;
+
+import java.util.Date;
+
+import static android.location.LocationManager.GPS_PROVIDER;
+
+public class MainActivity extends AppCompatActivity {
+    private EquipmentStatusDao equipmentStatusDao;
+
+    private Button loadButton;
+    private Button loadMaterialButton;
+    private Button unLoadButton;
+    private Button unloadMaterialButton;
+    private TextView countText;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        initializeViews();
+        DB.init(getApplicationContext());
+        equipmentStatusDao = DB.getInstance().equipmentStatusDao();
+
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        LocationListener locationListener = new DwLocationListener();
+        // Register the listener with the Location Manager to receive location updates
+
+        int permissionCheck = PermissionChecker.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION);
+        if(permissionCheck == PermissionChecker.PERMISSION_GRANTED){
+            locationManager.requestLocationUpdates(GPS_PROVIDER, 60000, 10, locationListener);
+            Data.setLocation(locationManager.getLastKnownLocation(GPS_PROVIDER));
+        }else{
+            Log.e("OperatorDetailActivity", "permission for using location service denied, requesting permission");
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
+
+        }
+
+
+
+        loadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity mainActivity = (MainActivity) v.getContext();
+                mainActivity.changeViewToLoaded();
+                mainActivity.changeStatus("Loaded");
+
+            }
+        });
+
+        unLoadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity mainActivity = (MainActivity) v.getContext();
+                mainActivity.incrementLoadCount();
+                mainActivity.changeViewToUnloaded();
+                mainActivity.changeStatus("Unloaded");
+            }
+        });
+
+        loadMaterialButton.setText(Data.getMaterial());
+        unloadMaterialButton.setText(Data.getMaterial());
+        loadMaterialButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity activity = (MainActivity) v.getContext();
+                Intent intent = new Intent(activity, ChooseMaterialActivity.class);
+                activity.startActivity(intent);
+            }
+        });
+    }
+
+
+
+    public void changeViewToLoaded() {
+        loadMaterialButton.setVisibility(View.GONE);
+        loadButton.setVisibility(View.GONE);
+        unLoadButton.setVisibility((View.VISIBLE));
+        unloadMaterialButton.setVisibility((View.VISIBLE));
+
+    }
+
+    public void incrementLoadCount() {
+        Data.setCount(Data.getCount() + 1);
+        countText.setText(Data.getCount() + "");
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+        builder.setMessage("Haul of " + Data.getMaterial() + " completed.");
+        final AlertDialog dialog = builder.create();
+        dialog.show();
+
+        new CountDownTimer(5000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+            }
+            @Override
+            public void onFinish() {
+                dialog.dismiss();
+            }
+        }.start();
+    }
+
+    public void changeViewToUnloaded() {
+        loadMaterialButton.setVisibility(View.VISIBLE);
+        loadButton.setVisibility(View.VISIBLE);
+        unLoadButton.setVisibility((View.GONE));
+        unloadMaterialButton.setVisibility(View.GONE);
+    }
+
+    public void initializeViews() {
+        loadButton = (Button) findViewById(R.id.loadButton);
+        loadMaterialButton = (Button) findViewById(R.id.loadMaterialButton);
+        unLoadButton = (Button) findViewById(R.id.unloadButton);
+        unloadMaterialButton = (Button) findViewById(R.id.unloadMaterialButton);
+        countText = (TextView) findViewById(R.id.textView);
+        countText.setText(Data.getCount() + "");
+        if(Data.getStatus().equals("Loaded")){
+            changeViewToLoaded();
+        }else{
+            changeViewToUnloaded();
+        }
+    }
+
+    public void saveStatus(String material, String status) {
+        final EquipmentStatus equipmentStatus = new EquipmentStatus();
+        equipmentStatus.setStatus(status);
+        equipmentStatus.setTask(material);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                equipmentStatusDao.insertAll(equipmentStatus);
+            }
+        }).start();
+
+    }
+
+
+    private void changeStatus(String statusString) {
+        Data.setStatus(statusString);
+        final EquipmentStatus equipmentStatus = getEquipmentStatus();
+        new HttpRequestTask(getApplicationContext(),equipmentStatus).execute();
+    }
+
+    public EquipmentStatus getEquipmentStatus(){
+        EquipmentStatus equipmentStatus = new EquipmentStatus();
+        equipmentStatus.setStatus(Data.getStatus());
+        equipmentStatus.setTask(Data.getMaterial());
+        equipmentStatus.setTimestamp(new Date());
+        equipmentStatus.setOperator(Data.getOperator());
+        equipmentStatus.setEquipment(Data.getEquipment());
+
+        TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+        String imei = telephonyManager.getDeviceId();
+        equipmentStatus.setImei(imei);
+        if(Data.getLocation() != null){
+            equipmentStatus.setLatitude(Data.getLocation().getLatitude());
+            equipmentStatus.setLongitude(Data.getLocation().getLongitude());
+        }
+        return equipmentStatus;
+
+    }
+}

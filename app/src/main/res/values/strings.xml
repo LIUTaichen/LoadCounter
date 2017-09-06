@@ -1,13 +1,13 @@
 <resources>
     <string name="app_name">Load Counter</string>
-    <string name="load">unloaded</string>
-    <string name="top_soil">top soil</string>
-    <string name="unload">loaded</string>
+    <string name="load">Unloaded</string>
+    <string name="top_soil">Top soil</string>
+    <string name="unload">Loaded</string>
     <string-array name="material_list">
-        <item>top soil</item>
-        <item>clay</item>
-        <item>unsuitable</item>
-        <item>cut to fill</item>
-        <item>other</item>
+        <item>Top soil</item>
+        <item>Clay</item>
+        <item>Unsuitable</item>
+        <item>Cut to fill</item>
+        <item>Other</item>
     </string-array>
 </resources>
