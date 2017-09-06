@@ -60,17 +60,32 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     1);
-
+            locationManager.requestLocationUpdates(GPS_PROVIDER, 60000, 10, locationListener);
+            Data.setLocation(locationManager.getLastKnownLocation(GPS_PROVIDER));
         }
 
+        int permissionCheckPhonestack = PermissionChecker.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_PHONE_STATE);
+        if(permissionCheckPhonestack == PermissionChecker.PERMISSION_GRANTED){
+            TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+            String imei = telephonyManager.getDeviceId();
+            Data.setImei(imei);
+        }else{
+            Log.e("MainActivity", "permission for using phone stack denied, requesting permission");
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_PHONE_STATE},
+                    1);
 
+
+        }
 
         loadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 MainActivity mainActivity = (MainActivity) v.getContext();
-                mainActivity.changeViewToLoaded();
                 mainActivity.changeStatus("Loaded");
+                mainActivity.changeViewToLoaded();
+                showAlert();
+
 
             }
         });
@@ -79,9 +94,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 MainActivity mainActivity = (MainActivity) v.getContext();
+                mainActivity.changeStatus("Unloaded");
                 mainActivity.incrementLoadCount();
                 mainActivity.changeViewToUnloaded();
-                mainActivity.changeStatus("Unloaded");
+                showAlert();
             }
         });
 
@@ -107,13 +123,15 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void incrementLoadCount() {
-        Data.setCount(Data.getCount() + 1);
-        countText.setText(Data.getCount() + "");
-
+    public void showAlert(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(false);
-        builder.setMessage("Haul of " + Data.getMaterial() + " completed.");
+        if(Data.getStatus().equals("Loaded")){
+            builder.setMessage("Haul of " + Data.getMaterial() + " started.");
+        }else{
+            builder.setMessage("Haul of " + Data.getMaterial() + " completed.");
+        }
+
         final AlertDialog dialog = builder.create();
         dialog.show();
 
@@ -127,12 +145,19 @@ public class MainActivity extends AppCompatActivity {
             }
         }.start();
     }
+    public void incrementLoadCount() {
+        Data.setCount(Data.getCount() + 1);
+        countText.setText(Data.getCount() + "");
+
+
+    }
 
     public void changeViewToUnloaded() {
         loadMaterialButton.setVisibility(View.VISIBLE);
         loadButton.setVisibility(View.VISIBLE);
         unLoadButton.setVisibility((View.GONE));
         unloadMaterialButton.setVisibility(View.GONE);
+
     }
 
     public void initializeViews() {
@@ -149,20 +174,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void saveStatus(String material, String status) {
-        final EquipmentStatus equipmentStatus = new EquipmentStatus();
-        equipmentStatus.setStatus(status);
-        equipmentStatus.setTask(material);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                equipmentStatusDao.insertAll(equipmentStatus);
-            }
-        }).start();
-
-    }
-
 
     private void changeStatus(String statusString) {
         Data.setStatus(statusString);
@@ -177,10 +188,7 @@ public class MainActivity extends AppCompatActivity {
         equipmentStatus.setTimestamp(new Date());
         equipmentStatus.setOperator(Data.getOperator());
         equipmentStatus.setEquipment(Data.getEquipment());
-
-        TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
-        String imei = telephonyManager.getDeviceId();
-        equipmentStatus.setImei(imei);
+        equipmentStatus.setImei(Data.getImei());
         if(Data.getLocation() != null){
             equipmentStatus.setLatitude(Data.getLocation().getLatitude());
             equipmentStatus.setLongitude(Data.getLocation().getLongitude());

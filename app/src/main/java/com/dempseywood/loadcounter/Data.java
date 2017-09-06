@@ -23,6 +23,8 @@ public class Data {
 
     private static Location location;
 
+    private static String imei;
+
     public static int getCount() {
         return count;
     }
@@ -71,5 +73,11 @@ public class Data {
         Data.equipment = equipment;
     }
 
+    public static String getImei() {
+        return imei;
+    }
 
+    public static void setImei(String imei) {
+        Data.imei = imei;
+    }
 }
